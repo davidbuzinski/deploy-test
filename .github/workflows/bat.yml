@@ -40,6 +40,8 @@ jobs:
           name: built-action
       - name: Perform 'setup-matlab'
         uses: ./
+        env:
+          MATHWORKS_MATLAB_BATCH_BASE_URL: https://mw-ci-static-dev.s3.amazonaws.com/matlab-batch/v1
         with:
           release: ${{ matrix.release }}
       - name: Run MATLAB Command
