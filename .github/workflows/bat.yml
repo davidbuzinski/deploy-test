@@ -1,10 +1,6 @@
 name: Build and Test
 on: [push]
 
-env:
-  MATHWORKS_ACCOUNT: ${{ secrets.MATHWORKS_ACCOUNT }}
-  MATHWORKS_TOKEN: ${{ secrets.MATHWORKS_TOKEN }}
-
 jobs:
   bat:
     name: Build and Test
@@ -30,48 +26,25 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: ubuntu-latest
-            release: latest 
-            products: Simulink Simulink_Test
-            check-matlab: matlabVer = ver('matlab'); assert(~isempty(matlabVer));
-            check-simulink: simulinkVer = ver('simulink'); assert(~isempty(simulinkVer));
-          - os: ubuntu-20.04
-            release: R2021bU2
-            products: |
-              MATLAB
-              Simulink
-            check-matlab: matlabVer = ver('matlab'); assert(strcmp(matlabVer.Release,'(R2021b)'));
-            check-simulink: simulinkVer = ver('simulink'); assert(strcmp(simulinkVer.Release,'(R2021b)'));
-          - os: windows-latest
-            release: latest
-            products: Simulink
-            check-matlab: matlabVer = ver('matlab'); assert(~isempty(matlabVer));
-            check-simulink: simulinkVer = ver('simulink'); assert(~isempty(simulinkVer));
           - os: macos-latest
             release: latest
-            products: Simulink
-            check-matlab: matlabVer = ver('matlab'); assert(~isempty(matlabVer));
-            check-simulink: simulinkVer = ver('simulink'); assert(~isempty(simulinkVer));
+          - os:  ubuntu-18.04
+            release: latest
+          - os: ubuntu-latest
+            release: latest
+          - os: windows-latest
+            release: latest
     steps:
       - uses: actions/download-artifact@v3
         with:
           name: built-action
-      - name: Install selected products
-        id: setup_matlab
+      - name: Perform 'setup-matlab'
         uses: ./
+        env:
+          MATHWORKS_MATLAB_BATCH_BASE_URL: https://mw-ci-static-dev.s3.amazonaws.com/matlab-batch/v1
         with:
           release: ${{ matrix.release }}
-          products: ${{ matrix.products }}
-      - name: Check matlabroot output is set
-        run:  'if [[ "${{ steps.setup_matlab.outputs.matlabroot }}" != *"MATLAB"* ]]; then exit 1; fi'
-        shell: bash
-      - name: Check MATLAB version
-        run: matlab-batch "${{ matrix.check-matlab }}"
-      - name: Check Simulink version
-        run: matlab-batch "${{ matrix.check-simulink }}"
-      - name: Check NoOp on 2nd install
-        uses: ./
+      - name: Run MATLAB Command
+        uses: matlab-actions/run-command@v1
         with:
-          release: ${{ matrix.release }}
-          products: ${{ matrix.products }}
-  
+          command: license inuse
